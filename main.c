@@ -41,7 +41,7 @@
 
 #include <usb_msc_lwext4.h>
 #include <ext4.h>
-#include "../../blockdev/test_lwext4.h"
+#include "test_lwext4.h"
 
 /**@brief   Read-write size*/
 #define READ_WRITE_SZIZE 1024 * 16

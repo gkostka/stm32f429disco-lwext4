@@ -1,9 +1,15 @@
+project(stm32f429-lwext4 C)
+cmake_minimum_required(VERSION 2.8)
+
 #Discoery disco demo
 enable_language(ASM)
 set (STM32F429_DEMO_ASM
     startup.S
 )
 
+add_subdirectory(lwext4)
+include_directories(lwext4/lwext4)
+include_directories(lwext4/blockdev)
 
 include_directories(.)
 include_directories(cmsis)
@@ -32,7 +38,7 @@ set_target_properties(stm32f429_demo PROPERTIES COMPILE_FLAGS "-Wno-unused-param
 set_target_properties(stm32f429_demo PROPERTIES COMPILE_FLAGS "-Wno-format")
 set_target_properties(stm32f429_demo PROPERTIES COMPILE_DEFINITIONS "STM32F429_439xx")
 
-set_target_properties(stm32f429_demo PROPERTIES LINK_FLAGS "-T${CMAKE_SOURCE_DIR}/demos/stm32f429_disco/stm32f429.ld")
+set_target_properties(stm32f429_demo PROPERTIES LINK_FLAGS "-T${CMAKE_SOURCE_DIR}/stm32f429.ld")
 target_link_libraries(stm32f429_demo blockdev)
 target_link_libraries(stm32f429_demo lwext4)
 
