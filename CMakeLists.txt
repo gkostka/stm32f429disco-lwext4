@@ -9,7 +9,7 @@ set (STM32F429_DEMO_ASM
 
 add_subdirectory(lwext4)
 include_directories(lwext4/lwext4)
-include_directories(lwext4/blockdev)
+include_directories(lwext4/fs_test/common)
 
 include_directories(.)
 include_directories(cmsis)
@@ -21,6 +21,7 @@ include_directories(stm/usb_host/Class/MSC/inc)
 include_directories(stm/usb_otg/inc)
 include_directories(stm/usb_user)
 
+aux_source_directory(lwext4/fs_test/common STM32F429_DEMO)
 aux_source_directory(. STM32F429_DEMO)
 aux_source_directory(cmsis STM32F429_DEMO)
 aux_source_directory(stm/lcd_utils STM32F429_DEMO)
