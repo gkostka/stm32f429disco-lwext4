@@ -134,8 +134,8 @@ static int usb_msc_open(struct ext4_blockdev *bdev)
 	MSC_LUNTypeDef lun;
 	USBH_MSC_GetLUNInfo(&hUSB_Host, 0, &lun);
 
-	part_offset = part0->first_lba;
-	_usb_msc.ph_bcnt = lun.capacity.block_nbr;
+	_usb_msc.ph_blk_offset = part0->first_lba;
+	_usb_msc.bdif->ph_bcnt = lun.capacity.block_nbr;
 
 	return hw_usb_connected() ? EOK : EIO;
 }
