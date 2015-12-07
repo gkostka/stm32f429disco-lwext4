@@ -62,7 +62,7 @@ static uint8_t rw_buff[READ_WRITE_SZIZE];
 static int rw_count = 100;
 
 /**@brief   Directory test count*/
-static int dir_cnt = 100;
+static int dir_cnt = 256;
 
 /**@brief   Static or dynamic cache mode*/
 static bool cache_mode = false;

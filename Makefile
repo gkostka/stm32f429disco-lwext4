@@ -1,5 +1,5 @@
 
-BUILD_TYPE = Debug
+BUILD_TYPE = Release
 PROJECT_SETUP = "Unix Makefiles"
 
 stm32f429disco:
