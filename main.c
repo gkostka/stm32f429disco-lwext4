@@ -41,6 +41,7 @@
 
 #include <usb_msc_lwext4.h>
 #include <ext4.h>
+#include <ext4_mbr.h>
 #include "test_lwext4.h"
 
 /**@brief   Read-write size*/
@@ -77,7 +78,10 @@ static bool bstat = false;
 static bool sbstat = false;
 
 /**@brief   Block device handle.*/
-static struct ext4_blockdev *bd;
+static struct ext4_blockdev *parent_blockdev;
+
+/**@brief   MBR blockdevices.*/
+static struct ext4_mbr_bdevs bdevs;
 
 /**@brief   Block cache handle.*/
 static struct ext4_bcache *bc;
@@ -85,17 +89,98 @@ static struct ext4_bcache *bc;
 static bool open_filedev(void)
 {
 
-	bd = ext4_usb_msc_get();
+	parent_blockdev = ext4_usb_msc_get();
 	bc = ext4_usb_msc_cache_get();
-	if (!bd || !bc) {
+	if (!parent_blockdev || !bc) {
 		printf("open_filedev: fail\n");
 		return false;
 	}
 	return true;
 }
 
+static bool mbr_scan(void)
+{
+	int r;
+	printf("ext4_mbr\n");
+	r = ext4_mbr_scan(parent_blockdev, &bdevs);
+	if (r != EOK) {
+		printf("ext4_mbr_scan error\n");
+		return false;
+	}
+
+	int i;
+	printf("ext4_mbr_scan:\n");
+	for (i = 0; i < 4; i++) {
+		printf("mbr_entry %d:\n", i);
+		if (!bdevs.partitions[i].bdif) {
+			printf("\tempty/unknown\n");
+			continue;
+		}
+
+		printf(" offeset: 0x%"PRIx64", %"PRIu64"MB\n",
+			bdevs.partitions[i].part_offset,
+			bdevs.partitions[i].part_offset / (1024 * 1024));
+		printf(" size:    0x%"PRIx64", %"PRIu64"MB\n",
+			bdevs.partitions[i].part_size,
+			bdevs.partitions[i].part_size / (1024 * 1024));
+
+
+	}
+
+	return true;
+}
+
+static bool do_tests(struct ext4_blockdev *part_blockdev)
+{
+	tim_wait_ms(TEST_DELAY_MS);
+	if (!test_lwext4_mount(part_blockdev, bc))
+		return false;
+
+	tim_wait_ms(TEST_DELAY_MS);
+
+	ext4_cache_write_back("/mp/", 1);
+	test_lwext4_cleanup();
+
+	if (sbstat) {
+		tim_wait_ms(TEST_DELAY_MS);
+		test_lwext4_mp_stats();
+	}
+
+	tim_wait_ms(TEST_DELAY_MS);
+	test_lwext4_dir_ls("/mp/");
+	if (!test_lwext4_dir_test(dir_cnt))
+		return false;
+
+	tim_wait_ms(TEST_DELAY_MS);
+	if (!test_lwext4_file_test(rw_buff, rw_szie, rw_count))
+		return false;
+
+	if (sbstat) {
+		tim_wait_ms(TEST_DELAY_MS);
+		test_lwext4_mp_stats();
+	}
+
+	if (cleanup_flag) {
+		tim_wait_ms(TEST_DELAY_MS);
+		test_lwext4_cleanup();
+	}
+
+	if (bstat) {
+		tim_wait_ms(TEST_DELAY_MS);
+		test_lwext4_block_stats();
+	}
+
+	ext4_cache_write_back("/mp/", 0);
+	if (!test_lwext4_umount())
+		return false;
+
+	return true;
+}
+
+
 int main(void)
 {
+	int i;
 	hw_init();
 
 	setbuf(stdout, 0);
@@ -118,48 +203,26 @@ int main(void)
 
 	if (!open_filedev())
 		goto Finish;
+	if (!mbr_scan())
+		goto Finish;
 
-	tim_wait_ms(TEST_DELAY_MS);
-	if (!test_lwext4_mount(bd, bc))
-		return EXIT_FAILURE;
+	/*Execute tests for every scaned partition.*/
+	for (i = 0; i < 4; i++) {
+		if (!bdevs.partitions[i].bdif)
+			continue;
 
-	tim_wait_ms(TEST_DELAY_MS);
+		printf("do tests for mbr_entry %d:\n", i);
+		printf(" offeset: 0x%"PRIx64", %"PRIu64"MB\n",
+			bdevs.partitions[i].part_offset,
+			bdevs.partitions[i].part_offset / (1024 * 1024));
+		printf(" size:    0x%"PRIx64", %"PRIu64"MB\n",
+			bdevs.partitions[i].part_size,
+			bdevs.partitions[i].part_size / (1024 * 1024));
 
-	ext4_cache_write_back("/mp/", 1);
-	test_lwext4_cleanup();
-
-	if (sbstat) {
 		tim_wait_ms(TEST_DELAY_MS);
-		test_lwext4_mp_stats();
+		if (!do_tests(&bdevs.partitions[i]))
+			goto Finish;
 	}
-
-	tim_wait_ms(TEST_DELAY_MS);
-	test_lwext4_dir_ls("/mp/");
-	if (!test_lwext4_dir_test(dir_cnt))
-		return EXIT_FAILURE;
-
-	tim_wait_ms(TEST_DELAY_MS);
-	if (!test_lwext4_file_test(rw_buff, rw_szie, rw_count))
-		return EXIT_FAILURE;
-
-	if (sbstat) {
-		tim_wait_ms(TEST_DELAY_MS);
-		test_lwext4_mp_stats();
-	}
-
-	if (cleanup_flag) {
-		tim_wait_ms(TEST_DELAY_MS);
-		test_lwext4_cleanup();
-	}
-
-	if (bstat) {
-		tim_wait_ms(TEST_DELAY_MS);
-		test_lwext4_block_stats();
-	}
-
-	ext4_cache_write_back("/mp/", 0);
-	if (!test_lwext4_umount())
-		return EXIT_FAILURE;
 
 	printf("press RESET button to restart\n");
 Finish:

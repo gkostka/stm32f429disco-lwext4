@@ -106,7 +106,7 @@ static int usb_msc_close(struct ext4_blockdev *bdev);
 
 /******************************************************************************/
 EXT4_BLOCKDEV_STATIC_INSTANCE(_usb_msc, USB_MSC_BLOCK_SIZE, 0, usb_msc_open,
-			      usb_msc_bread, usb_msc_bwrite, usb_msc_close);
+			    usb_msc_bread, usb_msc_bwrite, usb_msc_close, 0, 0);
 
 /******************************************************************************/
 EXT4_BCACHE_STATIC_INSTANCE(_usb_msc_cache, CONFIG_BLOCK_DEV_CACHE_SIZE,
@@ -117,26 +117,15 @@ EXT4_BCACHE_STATIC_INSTANCE(_usb_msc_cache, CONFIG_BLOCK_DEV_CACHE_SIZE,
 static int usb_msc_open(struct ext4_blockdev *bdev)
 {
 	(void)bdev;
-
-	static uint8_t mbr[512];
-	struct part_tab_entry *part0;
-	uint8_t status;
-
 	if (!hw_usb_connected())
 		return EIO;
-
-	status = USBH_MSC_Read(&hUSB_Host, 0, 0, mbr, 1);
-	if (status != USBH_OK)
-		return EIO;
-
-	part0 = (struct part_tab_entry *)(mbr + MBR_PART_TABLE_OFF);
 
 	MSC_LUNTypeDef lun;
 	USBH_MSC_GetLUNInfo(&hUSB_Host, 0, &lun);
 
-	_usb_msc.ph_blk_offset = part0->first_lba;
+	_usb_msc.part_offset = 0;
+	_usb_msc.part_size = lun.capacity.block_nbr * lun.capacity.block_size;
 	_usb_msc.bdif->ph_bcnt = lun.capacity.block_nbr;
-
 	return hw_usb_connected() ? EOK : EIO;
 }
 
