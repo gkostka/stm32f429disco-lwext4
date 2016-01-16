@@ -34,9 +34,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/**@brief   USB MSC cache get.*/
-struct ext4_bcache *ext4_usb_msc_cache_get(void);
-
 /**@brief   USB MSC blockdev get.*/
 struct ext4_blockdev *ext4_usb_msc_get(void);
 

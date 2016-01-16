@@ -63,7 +63,7 @@ static uint8_t rw_buff[READ_WRITE_SZIZE];
 static int rw_count = 100;
 
 /**@brief   Directory test count*/
-static int dir_cnt = 1024;
+static int dir_cnt = 100;
 
 /**@brief   Static or dynamic cache mode*/
 static bool cache_mode = false;
@@ -88,10 +88,8 @@ static struct ext4_bcache *bc;
 
 static bool open_filedev(void)
 {
-
 	parent_blockdev = ext4_usb_msc_get();
-	bc = ext4_usb_msc_cache_get();
-	if (!parent_blockdev || !bc) {
+	if (!parent_blockdev) {
 		printf("open_filedev: fail\n");
 		return false;
 	}

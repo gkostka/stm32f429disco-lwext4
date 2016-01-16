@@ -109,10 +109,6 @@ EXT4_BLOCKDEV_STATIC_INSTANCE(_usb_msc, USB_MSC_BLOCK_SIZE, 0, usb_msc_open,
 			    usb_msc_bread, usb_msc_bwrite, usb_msc_close, 0, 0);
 
 /******************************************************************************/
-EXT4_BCACHE_STATIC_INSTANCE(_usb_msc_cache, CONFIG_BLOCK_DEV_CACHE_SIZE,
-			    EXT_LOGICAL_BLOCK_SIZE);
-
-/******************************************************************************/
 
 static int usb_msc_open(struct ext4_blockdev *bdev)
 {
@@ -186,7 +182,5 @@ static int usb_msc_close(struct ext4_blockdev *bdev)
 }
 
 /******************************************************************************/
-
-struct ext4_bcache *ext4_usb_msc_cache_get(void) { return &_usb_msc_cache; }
 
 struct ext4_blockdev *ext4_usb_msc_get(void) { return &_usb_msc; }
