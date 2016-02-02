@@ -8,8 +8,9 @@ set (STM32F429_DEMO_ASM
 )
 
 add_subdirectory(lwext4)
-include_directories(lwext4/lwext4)
+include_directories(lwext4/include)
 include_directories(lwext4/fs_test/common)
+include_directories(${PROJECT_BINARY_DIR}/lwext4/include)
 
 include_directories(.)
 include_directories(cmsis)
